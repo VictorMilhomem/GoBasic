@@ -2,415 +2,445 @@ package parser
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/antlr4-go/antlr/v4"
 )
 
 type Visitor struct {
-	*antlr.BaseParseTreeVisitor
+	BaseBasicVisitor
+	env   *Environment
+	Lines *Environment
+}
+
+func NewVisitor() Visitor {
+	return Visitor{
+		env:   NewEnvironment(),
+		Lines: NewEnvironment(),
+	}
+}
+
+func (v *Visitor) Visit(tree antlr.ParseTree) interface{} {
+	// fmt.Printf("visit input type: %v\n", reflect.TypeOf(tree))
+	switch t := tree.(type) {
+	case *antlr.ErrorNodeImpl:
+		fmt.Printf("Error: - %v\n", t.GetText())
+		return nil
+	default:
+		return tree.Accept(v)
+	}
+}
+
+func (v *Visitor) VisitChildren(node antlr.RuleNode) interface{} {
+	for _, n := range node.GetChildren() {
+		v.Visit(n.(antlr.ParseTree))
+	}
+	return nil
 }
 
 func (v *Visitor) VisitProg(ctx *ProgContext) interface{} {
-	fmt.Println("Visited")
 	return v.VisitChildren(ctx)
 }
 
 func (v *Visitor) VisitLine(ctx *LineContext) interface{} {
-	return v.VisitChildren(ctx)
+	v.Lines.Set(ctx.Linenumber().GetText(), ctx.GetChild(1))
+	return v.Visit(ctx.Amprstmt(0))
 }
 
 func (v *Visitor) VisitAmperoper(ctx *AmperoperContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitLinenumber(ctx *LinenumberContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitAmprstmt(ctx *AmprstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return v.VisitStatement(ctx.Statement().(*StatementContext))
 }
 
 func (v *Visitor) VisitStatement(ctx *StatementContext) interface{} {
-	return v.VisitChildren(ctx)
+	return v.VisitPrintstmt1(ctx.Printstmt1().(*Printstmt1Context))
 }
 
 func (v *Visitor) VisitVardecl(ctx *VardeclContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitPrintstmt1(ctx *Printstmt1Context) interface{} {
-	return v.VisitChildren(ctx)
+	return v.VisitPrintlist(ctx.Printlist().(*PrintlistContext))
 }
 
 func (v *Visitor) VisitPrintlist(ctx *PrintlistContext) interface{} {
-	return v.VisitChildren(ctx)
+	return v.VisitExpression(ctx.Expression(0).(*ExpressionContext))
 }
 
 func (v *Visitor) VisitGetstmt(ctx *GetstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitLetstmt(ctx *LetstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitVariableassignment(ctx *VariableassignmentContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitRelop(ctx *RelopContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitNeq(ctx *NeqContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitIfstmt(ctx *IfstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitForstmt1(ctx *Forstmt1Context) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitForstmt2(ctx *Forstmt2Context) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitNextstmt(ctx *NextstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitInputstmt(ctx *InputstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitReadstmt(ctx *ReadstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitDimstmt(ctx *DimstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitGotostmt(ctx *GotostmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitGosubstmt(ctx *GosubstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitPokestmt(ctx *PokestmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitCallstmt(ctx *CallstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitHplotstmt(ctx *HplotstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitVplotstmt(ctx *VplotstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitPlotstmt(ctx *PlotstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitOngotostmt(ctx *OngotostmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitOngosubstmt(ctx *OngosubstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitVtabstmnt(ctx *VtabstmntContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitHtabstmnt(ctx *HtabstmntContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitHimemstmt(ctx *HimemstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitLomemstmt(ctx *LomemstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitDatastmt(ctx *DatastmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitDatum(ctx *DatumContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitWaitstmt(ctx *WaitstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitXdrawstmt(ctx *XdrawstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitDrawstmt(ctx *DrawstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitDefstmt(ctx *DefstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitTabstmt(ctx *TabstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitSpeedstmt(ctx *SpeedstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitRotstmt(ctx *RotstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitScalestmt(ctx *ScalestmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitColorstmt(ctx *ColorstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitHcolorstmt(ctx *HcolorstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitHlinstmt(ctx *HlinstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitVlinstmt(ctx *VlinstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitOnerrstmt(ctx *OnerrstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitPrstmt(ctx *PrstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitInstmt(ctx *InstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitStorestmt(ctx *StorestmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitRecallstmt(ctx *RecallstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitListstmt(ctx *ListstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitPopstmt(ctx *PopstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitAmptstmt(ctx *AmptstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitIncludestmt(ctx *IncludestmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitEndstmt(ctx *EndstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitReturnstmt(ctx *ReturnstmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitRestorestmt(ctx *RestorestmtContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitNumber(ctx *NumberContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitFunc_(ctx *Func_Context) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitSignExpression(ctx *SignExpressionContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitExponentExpression(ctx *ExponentExpressionContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitMultiplyingExpression(ctx *MultiplyingExpressionContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitAddingExpression(ctx *AddingExpressionContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitRelationalExpression(ctx *RelationalExpressionContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitExpression(ctx *ExpressionContext) interface{} {
-	return v.VisitChildren(ctx)
+	str := strings.ReplaceAll(ctx.Func_().STRINGLITERAL().GetText(), string('"'), "")
+	fmt.Printf("%v", str)
+	return nil
 }
 
 func (v *Visitor) VisitVar_(ctx *Var_Context) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitVarname(ctx *VarnameContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitVarsuffix(ctx *VarsuffixContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitVarlist(ctx *VarlistContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitExprlist(ctx *ExprlistContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitSqrfunc(ctx *SqrfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitChrfunc(ctx *ChrfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitLenfunc(ctx *LenfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitAscfunc(ctx *AscfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitMidfunc(ctx *MidfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitPdlfunc(ctx *PdlfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitPeekfunc(ctx *PeekfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitIntfunc(ctx *IntfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitSpcfunc(ctx *SpcfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitFrefunc(ctx *FrefuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitPosfunc(ctx *PosfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitUsrfunc(ctx *UsrfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitLeftfunc(ctx *LeftfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitRightfunc(ctx *RightfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitStrfunc(ctx *StrfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitFnfunc(ctx *FnfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitValfunc(ctx *ValfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitScrnfunc(ctx *ScrnfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitSinfunc(ctx *SinfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitCosfunc(ctx *CosfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitTanfunc(ctx *TanfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitAtnfunc(ctx *AtnfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitRndfunc(ctx *RndfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitSgnfunc(ctx *SgnfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitExpfunc(ctx *ExpfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitLogfunc(ctx *LogfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitAbsfunc(ctx *AbsfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }
 
 func (v *Visitor) VisitTabfunc(ctx *TabfuncContext) interface{} {
-	return v.VisitChildren(ctx)
+	return nil
 }

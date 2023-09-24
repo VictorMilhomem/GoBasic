@@ -23,13 +23,13 @@ func runFile(fpath string) {
 	p := parser.NewBasicParser(stream)
 	p.BuildParseTrees = true
 	tree := p.Prog()
-	visitor := parser.Visitor{}
-	_ = visitor.VisitProg(tree.(*parser.ProgContext))
+	visitor := parser.NewVisitor()
+	_ = visitor.Visit(tree)
 }
 
 func main() {
 	// args := os.Args[1:]
-	runFile("examples\\paint.bas")
+	runFile("examples\\hello.bas")
 	/* if len(args) > 1 {
 		fmt.Println("Usage: basic [script]")
 		os.Exit(64)
