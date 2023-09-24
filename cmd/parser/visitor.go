@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/VictorMilhomem/Basic/cmd/compiler"
@@ -12,16 +13,16 @@ import (
 
 type Visitor struct {
 	BaseBasicVisitor
-	env   *Environment
-	Lines *Environment
-	comp  *compiler.Compiler
+	env  *Environment
+	comp *compiler.Compiler
 }
+
+var currentLine string
 
 func NewVisitor(comp *compiler.Compiler) Visitor {
 	return Visitor{
-		env:   NewEnvironment(),
-		Lines: NewEnvironment(),
-		comp:  comp,
+		env:  NewEnvironment(),
+		comp: comp,
 	}
 }
 
@@ -48,7 +49,10 @@ func (v *Visitor) VisitProg(ctx *ProgContext) interface{} {
 }
 
 func (v *Visitor) VisitLine(ctx *LineContext) interface{} {
-	v.Lines.Set(ctx.Linenumber().GetText(), ctx.GetChild(1))
+	// v.Lines.Set(ctx.Linenumber().GetText(), ctx.GetChild(1))
+	line := ctx.Linenumber().GetText()
+	trimmedLine := strings.Trim(line, `"`)
+	currentLine = trimmedLine
 	return v.Visit(ctx.Amprstmt(0))
 }
 
@@ -73,12 +77,14 @@ func (v *Visitor) VisitVardecl(ctx *VardeclContext) interface{} {
 }
 
 func (v *Visitor) VisitPrintstmt1(ctx *Printstmt1Context) interface{} {
+	// newBlock := v.comp.MainFunc.NewBlock(currentLine)
+	// v.env.Set(currentLine, newBlock)
 	return v.VisitPrintlist(ctx.Printlist().(*PrintlistContext))
 }
 
 func (v *Visitor) VisitPrintlist(ctx *PrintlistContext) interface{} {
 	val := v.VisitExpression(ctx.Expression(0).(*ExpressionContext)).(*constant.ExprGetElementPtr)
-	v.comp.MainBlock.NewCall(v.comp.Functions["puts"], val)
+	v.comp.Entry.NewCall(v.comp.Functions["printf"], val)
 	return nil
 }
 
@@ -287,7 +293,14 @@ func (v *Visitor) VisitRestorestmt(ctx *RestorestmtContext) interface{} {
 }
 
 func (v *Visitor) VisitNumber(ctx *NumberContext) interface{} {
-	return nil
+	text := ctx.NUMBER().GetText()
+	trimmedTxt := strings.Trim(text, `"`)
+	number, _ := strconv.Atoi(trimmedTxt)
+	val := constant.NewInt(types.I64, int64(number))
+	num := v.comp.Module.NewGlobalDef("", val)
+	zero := constant.NewInt(types.I64, 0)
+	gep := constant.NewGetElementPtr(val.Typ, num, zero, zero)
+	return gep
 }
 
 func (v *Visitor) VisitFunc_(ctx *Func_Context) interface{} {
@@ -318,7 +331,7 @@ func (v *Visitor) VisitExpression(ctx *ExpressionContext) interface{} {
 	text := ctx.Func_().STRINGLITERAL().GetText()
 	trimmedTxt := strings.Trim(text, `"`)
 	val := constant.NewCharArrayFromString(trimmedTxt + "\x00")
-	str := v.comp.Module.NewGlobalDef("str", val)
+	str := v.comp.Module.NewGlobalDef("", val)
 	zero := constant.NewInt(types.I64, 0)
 	gep := constant.NewGetElementPtr(val.Typ, str, zero, zero)
 	return gep

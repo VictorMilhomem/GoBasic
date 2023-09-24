@@ -9,7 +9,8 @@ import (
 type Compiler struct {
 	Module    *ir.Module
 	Functions BasicFunc
-	MainBlock *ir.Block
+	Entry     *ir.Block
+	MainFunc  *ir.Func
 }
 
 type BasicFunc map[string]*ir.Func
@@ -31,15 +32,15 @@ func NewCompiler() *Compiler {
 }
 
 func (c *Compiler) Set() {
-	print := c.Module.NewFunc("puts", types.I32, ir.NewParam("", types.NewPointer(types.I8)))
-	c.SetFunc("puts", print)
+	print := c.Module.NewFunc("printf", types.I32, ir.NewParam("", types.NewPointer(types.I8)))
+	c.SetFunc("printf", print)
 }
 
 func (c *Compiler) Main() {
-	main := c.Module.NewFunc("main", types.I32)
-	c.MainBlock = main.NewBlock("")
+	c.MainFunc = c.Module.NewFunc("main", types.I32)
+	c.Entry = c.MainFunc.NewBlock("entry")
 }
 
 func (c *Compiler) MainRet() {
-	c.MainBlock.NewRet(constant.NewInt(types.I32, 0))
+	c.Entry.NewRet(constant.NewInt(types.I32, 0))
 }
