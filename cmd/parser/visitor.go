@@ -2,21 +2,25 @@ package parser
 
 import (
 	"fmt"
-	"strings"
 
+	"github.com/VictorMilhomem/Basic/cmd/compiler"
 	"github.com/antlr4-go/antlr/v4"
+	"github.com/llir/llvm/ir/constant"
+	"github.com/llir/llvm/ir/types"
 )
 
 type Visitor struct {
 	BaseBasicVisitor
 	env   *Environment
 	Lines *Environment
+	comp  *compiler.Compiler
 }
 
-func NewVisitor() Visitor {
+func NewVisitor(comp *compiler.Compiler) Visitor {
 	return Visitor{
 		env:   NewEnvironment(),
 		Lines: NewEnvironment(),
+		comp:  comp,
 	}
 }
 
@@ -72,7 +76,9 @@ func (v *Visitor) VisitPrintstmt1(ctx *Printstmt1Context) interface{} {
 }
 
 func (v *Visitor) VisitPrintlist(ctx *PrintlistContext) interface{} {
-	return v.VisitExpression(ctx.Expression(0).(*ExpressionContext))
+	val := v.VisitExpression(ctx.Expression(0).(*ExpressionContext)).(*constant.ExprGetElementPtr)
+	v.comp.MainBlock.NewCall(v.comp.Functions["print"], val)
+	return nil
 }
 
 func (v *Visitor) VisitGetstmt(ctx *GetstmtContext) interface{} {
@@ -308,9 +314,11 @@ func (v *Visitor) VisitRelationalExpression(ctx *RelationalExpressionContext) in
 }
 
 func (v *Visitor) VisitExpression(ctx *ExpressionContext) interface{} {
-	str := strings.ReplaceAll(ctx.Func_().STRINGLITERAL().GetText(), string('"'), "")
-	fmt.Printf("%v", str)
-	return nil
+	hello := constant.NewCharArrayFromString(ctx.Func_().STRINGLITERAL().GetText() + "\x00")
+	str := v.comp.Module.NewGlobalDef("str", hello)
+	zero := constant.NewInt(types.I64, 0)
+	gep := constant.NewGetElementPtr(hello.Typ, str, zero, zero)
+	return gep
 }
 
 func (v *Visitor) VisitVar_(ctx *Var_Context) interface{} {

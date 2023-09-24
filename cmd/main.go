@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"path"
 
+	"github.com/VictorMilhomem/Basic/cmd/compiler"
 	"github.com/VictorMilhomem/Basic/cmd/parser"
 	"github.com/antlr4-go/antlr/v4"
 )
@@ -23,8 +25,13 @@ func runFile(fpath string) {
 	p := parser.NewBasicParser(stream)
 	p.BuildParseTrees = true
 	tree := p.Prog()
-	visitor := parser.NewVisitor()
+	cpl := compiler.NewCompiler()
+	cpl.Set()
+	visitor := parser.NewVisitor(cpl)
+	cpl.Main()
 	_ = visitor.Visit(tree)
+	cpl.MainRet()
+	fmt.Println(cpl.Module)
 }
 
 func main() {

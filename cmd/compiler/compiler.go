@@ -2,33 +2,44 @@ package compiler
 
 import (
 	"github.com/llir/llvm/ir"
+	"github.com/llir/llvm/ir/constant"
 	"github.com/llir/llvm/ir/types"
 )
 
 type Compiler struct {
-	module    *ir.Module
-	functions BasicFunc
+	Module    *ir.Module
+	Functions BasicFunc
+	MainBlock *ir.Block
 }
 
 type BasicFunc map[string]*ir.Func
 
 func (c *Compiler) SetFunc(name string, val *ir.Func) {
-	c.functions[name] = val
+	c.Functions[name] = val
 }
 
 func (c *Compiler) GetFunc(name string) (*ir.Func, bool) {
-	val, ok := c.functions[name]
+	val, ok := c.Functions[name]
 	return val, ok
 }
 
 func NewCompiler() *Compiler {
 	return &Compiler{
-		module:    ir.NewModule(),
-		functions: make(map[string]*ir.Func),
+		Module:    ir.NewModule(),
+		Functions: make(map[string]*ir.Func),
 	}
 }
 
 func (c *Compiler) Set() {
-	print := c.module.NewFunc("print", types.I32, ir.NewParam("", types.NewPointer(types.I8)))
+	print := c.Module.NewFunc("print", types.I32, ir.NewParam("", types.NewPointer(types.I8)))
 	c.SetFunc("print", print)
+}
+
+func (c *Compiler) Main() {
+	main := c.Module.NewFunc("main", types.I32)
+	c.MainBlock = main.NewBlock("")
+}
+
+func (c *Compiler) MainRet() {
+	c.MainBlock.NewRet(constant.NewInt(types.I32, 0))
 }
