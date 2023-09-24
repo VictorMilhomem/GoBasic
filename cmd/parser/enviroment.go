@@ -5,7 +5,9 @@ type Environment struct {
 }
 
 func NewEnvironment() *Environment {
-	return &Environment{Values: make(map[string]interface{})}
+	return &Environment{
+		Values: make(map[string]interface{}),
+	}
 }
 
 func (e *Environment) Get(name string) (interface{}, bool) {
