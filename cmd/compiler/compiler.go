@@ -31,8 +31,8 @@ func NewCompiler() *Compiler {
 }
 
 func (c *Compiler) Set() {
-	print := c.Module.NewFunc("print", types.I32, ir.NewParam("", types.NewPointer(types.I8)))
-	c.SetFunc("print", print)
+	print := c.Module.NewFunc("puts", types.I32, ir.NewParam("", types.NewPointer(types.I8)))
+	c.SetFunc("puts", print)
 }
 
 func (c *Compiler) Main() {

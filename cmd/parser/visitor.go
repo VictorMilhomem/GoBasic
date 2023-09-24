@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/VictorMilhomem/Basic/cmd/compiler"
 	"github.com/antlr4-go/antlr/v4"
@@ -77,7 +78,7 @@ func (v *Visitor) VisitPrintstmt1(ctx *Printstmt1Context) interface{} {
 
 func (v *Visitor) VisitPrintlist(ctx *PrintlistContext) interface{} {
 	val := v.VisitExpression(ctx.Expression(0).(*ExpressionContext)).(*constant.ExprGetElementPtr)
-	v.comp.MainBlock.NewCall(v.comp.Functions["print"], val)
+	v.comp.MainBlock.NewCall(v.comp.Functions["puts"], val)
 	return nil
 }
 
@@ -314,10 +315,12 @@ func (v *Visitor) VisitRelationalExpression(ctx *RelationalExpressionContext) in
 }
 
 func (v *Visitor) VisitExpression(ctx *ExpressionContext) interface{} {
-	hello := constant.NewCharArrayFromString(ctx.Func_().STRINGLITERAL().GetText() + "\x00")
-	str := v.comp.Module.NewGlobalDef("str", hello)
+	text := ctx.Func_().STRINGLITERAL().GetText()
+	trimmedTxt := strings.Trim(text, `"`)
+	val := constant.NewCharArrayFromString(trimmedTxt + "\x00")
+	str := v.comp.Module.NewGlobalDef("str", val)
 	zero := constant.NewInt(types.I64, 0)
-	gep := constant.NewGetElementPtr(hello.Typ, str, zero, zero)
+	gep := constant.NewGetElementPtr(val.Typ, str, zero, zero)
 	return gep
 }
 

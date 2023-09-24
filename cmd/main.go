@@ -4,12 +4,35 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/VictorMilhomem/Basic/cmd/compiler"
 	"github.com/VictorMilhomem/Basic/cmd/parser"
 	"github.com/antlr4-go/antlr/v4"
 )
+
+func stringToLlvm(source string) error {
+	// Define the file path
+	outputPath := filepath.Join("bin", "out.ll")
+
+	// Convert the string to bytes
+	data := []byte(source)
+
+	// Create the bin directory if it doesn't exist
+	if err := os.MkdirAll("bin", os.ModePerm); err != nil {
+		return err
+	}
+
+	// Create the file and write the bytes
+	err := ioutil.WriteFile(outputPath, data, 0o644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func runFile(fpath string) {
 	bytes, err := ioutil.ReadFile(path.Base(fpath))
@@ -32,6 +55,10 @@ func runFile(fpath string) {
 	_ = visitor.Visit(tree)
 	cpl.MainRet()
 	fmt.Println(cpl.Module)
+	err = stringToLlvm(cpl.Module.String())
+	if err != nil {
+		log.Panic("could not create ll file")
+	}
 }
 
 func main() {
