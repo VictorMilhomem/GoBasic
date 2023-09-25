@@ -1,14 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
 
-	"github.com/VictorMilhomem/Basic/cmd/compiler"
 	"github.com/VictorMilhomem/Basic/cmd/parser"
 	"github.com/antlr4-go/antlr/v4"
 )
@@ -47,18 +45,9 @@ func runFile(fpath string) {
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	p := parser.NewBasicParser(stream)
 	p.BuildParseTrees = true
-	tree := p.Prog()
-	cpl := compiler.NewCompiler()
-	cpl.Set()
-	visitor := parser.NewVisitor(cpl)
-	cpl.Main()
+	tree := p.Program()
+	visitor := parser.NewVisitor()
 	_ = visitor.Visit(tree)
-	cpl.MainRet()
-	fmt.Println(cpl.Module)
-	err = stringToLlvm(cpl.Module.String())
-	if err != nil {
-		log.Panic("could not create ll file")
-	}
 }
 
 func main() {

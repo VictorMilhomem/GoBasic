@@ -1,23 +1,21 @@
 package parser
 
-import "github.com/llir/llvm/ir"
-
 type Environment struct {
-	Values map[string]*ir.Block
+	Values map[string]interface{}
 }
 
 func NewEnvironment() *Environment {
 	return &Environment{
-		Values: make(map[string]*ir.Block),
+		Values: make(map[string]interface{}),
 	}
 }
 
-func (e *Environment) Get(name string) (*ir.Block, bool) {
+func (e *Environment) Get(name string) (interface{}, bool) {
 	val, ok := e.Values[name]
 	return val, ok
 }
 
-func (e *Environment) Set(name string, val *ir.Block) interface{} {
+func (e *Environment) Set(name string, val interface{}) interface{} {
 	e.Values[name] = val
 	return val
 }
