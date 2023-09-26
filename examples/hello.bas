@@ -1,2 +1,2 @@
-100 PRINT "Hello World "
+100 PRINT "Hello World\n"
 110 IF 10 < 20 THEN PRINT "FLUMINENSE"

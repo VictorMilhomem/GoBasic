@@ -97,7 +97,10 @@ func (v *Visitor) VisitExprlist(ctx *ExprlistContext) interface{} {
 	switch {
 	case ctx.STRING(0) != nil:
 		str := strings.Trim(ctx.STRING(0).GetText(), "\"")
-		fmt.Print(str)
+		if strings.Contains(str, "\\n") {
+			str = strings.ReplaceAll(str, "\\n", "\n")
+		}
+		fmt.Printf("%v", str)
 	}
 	return nil
 }

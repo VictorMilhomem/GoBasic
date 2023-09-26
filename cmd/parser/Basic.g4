@@ -5,8 +5,8 @@ program
     ;
 
 line
-   : number statement CR
-   | statement CR
+   : number statement (CR | EOF)
+   | statement (CR | EOF)
    ;
 
 statement
