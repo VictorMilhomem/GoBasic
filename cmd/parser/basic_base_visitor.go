@@ -40,6 +40,14 @@ func (v *BaseBasicVisitor) VisitFactor(ctx *FactorContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseBasicVisitor) VisitUnary(ctx *UnaryContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseBasicVisitor) VisitMutlop(ctx *MutlopContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseBasicVisitor) VisitVara(ctx *VaraContext) interface{} {
 	return v.VisitChildren(ctx)
 }

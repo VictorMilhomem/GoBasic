@@ -75,7 +75,8 @@ func (v *Visitor) VisitStatement(ctx *StatementContext) interface{} {
 	case "INPUT":
 		return nil
 	case "LET":
-		return nil
+		name := strings.Trim(ctx.Vara().GetText(), "\"")
+		return v.env.Set(name, v.Visit(ctx.Expression(0)).(float64))
 	case "GOSUB":
 		return nil
 	case "RETURN":
@@ -88,9 +89,18 @@ func (v *Visitor) VisitStatement(ctx *StatementContext) interface{} {
 		return nil
 	case "END":
 		return nil
-	}
+	default:
+		if ctx.Vara() != nil {
+			name := strings.Trim(ctx.Vara().GetText(), "\"")
+			if val, ok := v.env.Get(name); ok {
+				val = v.Visit(ctx.Expression(0)).(float64)
+				return v.env.Set(name, val)
+			}
 
-	return nil
+		}
+		return nil
+
+	}
 }
 
 func (v *Visitor) VisitExprlist(ctx *ExprlistContext) interface{} {
@@ -101,30 +111,81 @@ func (v *Visitor) VisitExprlist(ctx *ExprlistContext) interface{} {
 			str = strings.ReplaceAll(str, "\\n", "\n")
 		}
 		fmt.Printf("%v", str)
+		return nil
+	default:
+		val := v.Visit(ctx.Expression(0))
+		fmt.Printf("%v", val)
 	}
 	return nil
 }
 
 func (v *Visitor) VisitExpression(ctx *ExpressionContext) interface{} {
-	prefix := fmt.Sprint(ctx.GetChild(0))
-	switch prefix {
-	case "-":
-		return v.Visit(ctx.Term(0))
-	default:
-		return v.Visit(ctx.Term(0))
+	leftVal := v.Visit(ctx.Term(0)).(float64)
+
+	if ctx.Unary() != nil {
+		op := ctx.Unary().GetText()
+		if op == "-" {
+			leftVal = -leftVal
+		}
 	}
+
+	for i := 1; i < len(ctx.AllTerm()); i++ {
+		var op string
+		if ctx.GetChild(2) != nil {
+			op = fmt.Sprint(ctx.GetChildren()[1])
+		}
+
+		rightVal := v.Visit(ctx.Term(i)).(float64)
+
+		switch op {
+		case "+":
+			leftVal += rightVal
+		case "-":
+			leftVal -= rightVal
+		}
+	}
+
+	return leftVal
 }
 
 func (v *Visitor) VisitTerm(ctx *TermContext) interface{} {
-	switch {
-	case ctx.Factor(0) != nil:
-		return v.Visit(ctx.Factor(0))
+	result := v.Visit(ctx.Factor(0)).(float64)
+
+	for i := 1; i < len(ctx.AllFactor()); i++ {
+		opCtx := ctx.Mutlop(i - 1)
+		op := opCtx.GetText()
+		right := v.Visit(ctx.Factor(i)).(float64)
+
+		switch op {
+		case "*":
+			result *= right
+		case "/":
+			if right != 0 {
+				result /= right
+			} else {
+			}
+		}
 	}
-	return nil
+
+	return result
 }
 
 func (v *Visitor) VisitFactor(ctx *FactorContext) interface{} {
-	return v.Visit(ctx.Number())
+	switch {
+	case ctx.Number() != nil:
+		return v.Visit(ctx.Number())
+	case ctx.Vara() != nil:
+		return v.Visit(ctx.Vara())
+	default:
+		return nil
+	}
+}
+
+func (v *Visitor) VisitVara(ctx *VaraContext) interface{} {
+	name := strings.Trim(ctx.GetText(), "\"")
+	val, _ := v.env.Get(name)
+	number := val.(float64)
+	return number
 }
 
 func (v *Visitor) VisitNumber(ctx *NumberContext) interface{} {

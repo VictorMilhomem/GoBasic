@@ -32,6 +32,12 @@ type BasicVisitor interface {
 	// Visit a parse tree produced by BasicParser#factor.
 	VisitFactor(ctx *FactorContext) interface{}
 
+	// Visit a parse tree produced by BasicParser#unary.
+	VisitUnary(ctx *UnaryContext) interface{}
+
+	// Visit a parse tree produced by BasicParser#mutlop.
+	VisitMutlop(ctx *MutlopContext) interface{}
+
 	// Visit a parse tree produced by BasicParser#vara.
 	VisitVara(ctx *VaraContext) interface{}
 

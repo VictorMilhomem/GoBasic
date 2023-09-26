@@ -32,11 +32,11 @@ varlist
    ;
 
 expression
-   : ('+' | '-' )? term (('+' | '-') term)*
+   : ( unary)? term (('+' | '-') term)*
    ;
 
 term
-   : factor (('*' | '/') factor)*
+   : factor (mutlop factor)*
    ;
 
 factor
@@ -44,6 +44,9 @@ factor
    vara
    | number
    ;
+
+unary: '+' | '-';
+mutlop: ('*' | '/');
 
 vara
     : VAR
