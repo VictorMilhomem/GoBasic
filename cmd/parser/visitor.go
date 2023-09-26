@@ -2,6 +2,9 @@ package parser
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -10,14 +13,19 @@ import (
 
 type Visitor struct {
 	BaseBasicVisitor
-	env *Environment
+	env   *Environment
+	lines *Environment // store all lines evaluation
 }
 
-var currentLine string
+var (
+	currentLine string
+	_goto       bool
+)
 
 func NewVisitor() Visitor {
 	return Visitor{
-		env: NewEnvironment(),
+		env:   NewEnvironment(),
+		lines: NewEnvironment(),
 	}
 }
 
@@ -50,7 +58,9 @@ func (v *Visitor) VisitLine(ctx *LineContext) interface{} {
 	switch {
 	case ctx.Statement() != nil && ctx.Number() != nil:
 		currentLine = strings.Trim(ctx.Number().GetText(), "\"")
+		v.lines.Set(currentLine, ctx.Statement())
 		return v.Visit(ctx.Statement())
+
 	default:
 		return v.Visit(ctx.Statement())
 	}
@@ -71,17 +81,19 @@ func (v *Visitor) VisitStatement(ctx *StatementContext) interface{} {
 		}
 		return nil
 	case "GOTO":
-		return nil
+		line_stmt, _ := v.lines.Get(strings.Trim(ctx.Number().GetText(), "\""))
+		return v.Visit(line_stmt.(antlr.ParseTree))
 	case "INPUT":
 		return nil
 	case "LET":
 		name := strings.Trim(ctx.Vara().GetText(), "\"")
-		return v.env.Set(name, v.Visit(ctx.Expression(0)).(float64))
+		return v.env.Set(name, v.Visit(ctx.Expression(0)))
 	case "GOSUB":
-		return nil
+		return v.Visit(ctx.Expression(0))
 	case "RETURN":
 		return nil
 	case "CLEAR":
+		clearScreen()
 		return nil
 	case "LIST":
 		return nil
@@ -92,8 +104,8 @@ func (v *Visitor) VisitStatement(ctx *StatementContext) interface{} {
 	default:
 		if ctx.Vara() != nil {
 			name := strings.Trim(ctx.Vara().GetText(), "\"")
-			if val, ok := v.env.Get(name); ok {
-				val = v.Visit(ctx.Expression(0)).(float64)
+			if _, ok := v.env.Get(name); ok {
+				val := v.Visit(ctx.Expression(0))
 				return v.env.Set(name, val)
 			}
 
@@ -111,12 +123,12 @@ func (v *Visitor) VisitExprlist(ctx *ExprlistContext) interface{} {
 			str = strings.ReplaceAll(str, "\\n", "\n")
 		}
 		fmt.Printf("%v", str)
-		return nil
+		return str
 	default:
 		val := v.Visit(ctx.Expression(0))
 		fmt.Printf("%v", val)
+		return val
 	}
-	return nil
 }
 
 func (v *Visitor) VisitExpression(ctx *ExpressionContext) interface{} {
@@ -184,8 +196,7 @@ func (v *Visitor) VisitFactor(ctx *FactorContext) interface{} {
 func (v *Visitor) VisitVara(ctx *VaraContext) interface{} {
 	name := strings.Trim(ctx.GetText(), "\"")
 	val, _ := v.env.Get(name)
-	number := val.(float64)
-	return number
+	return val
 }
 
 func (v *Visitor) VisitNumber(ctx *NumberContext) interface{} {
@@ -225,4 +236,19 @@ func ifExpression(lhs, rhs interface{}, relop string) bool {
 		return false
 	}
 	return false
+}
+
+func clearScreen() {
+	switch runtime.GOOS {
+	case "linux", "darwin":
+		cmd := exec.Command("clear")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	case "windows":
+		cmd := exec.Command("cmd", "/c", "cls")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	default:
+		fmt.Println("Limpeza de tela não suportada neste sistema operacional.")
+	}
 }
