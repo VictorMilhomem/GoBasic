@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/antlr4-go/antlr/v4"
@@ -39,7 +40,10 @@ func (v *Visitor) VisitChildren(node antlr.RuleNode) interface{} {
 }
 
 func (v *Visitor) VisitProgram(ctx *ProgramContext) interface{} {
-	return v.Visit(ctx.Line(0))
+	for _, line := range ctx.AllLine() {
+		v.Visit(line)
+	}
+	return nil
 }
 
 func (v *Visitor) VisitLine(ctx *LineContext) interface{} {
@@ -58,6 +62,13 @@ func (v *Visitor) VisitStatement(ctx *StatementContext) interface{} {
 	case "PRINT":
 		return v.Visit(ctx.Exprlist())
 	case "IF":
+		lhs := v.Visit(ctx.Expression(0))
+		rhs := v.Visit(ctx.Expression(1))
+		relop := strings.Trim(ctx.Relop().GetText(), "\"")
+		val := ifExpression(lhs, rhs, relop)
+		if val {
+			return v.Visit(ctx.Statement())
+		}
 		return nil
 	case "GOTO":
 		return nil
@@ -89,4 +100,65 @@ func (v *Visitor) VisitExprlist(ctx *ExprlistContext) interface{} {
 		fmt.Print(str)
 	}
 	return nil
+}
+
+func (v *Visitor) VisitExpression(ctx *ExpressionContext) interface{} {
+	prefix := fmt.Sprint(ctx.GetChild(0))
+	switch prefix {
+	case "-":
+		return v.Visit(ctx.Term(0))
+	default:
+		return v.Visit(ctx.Term(0))
+	}
+}
+
+func (v *Visitor) VisitTerm(ctx *TermContext) interface{} {
+	switch {
+	case ctx.Factor(0) != nil:
+		return v.Visit(ctx.Factor(0))
+	}
+	return nil
+}
+
+func (v *Visitor) VisitFactor(ctx *FactorContext) interface{} {
+	return v.Visit(ctx.Number())
+}
+
+func (v *Visitor) VisitNumber(ctx *NumberContext) interface{} {
+	num := strings.Trim(ctx.GetText(), "\"")
+	val, _ := strconv.ParseFloat(num, 64)
+	return val
+}
+
+func ifExpression(lhs, rhs interface{}, relop string) bool {
+	lhval := lhs.(float64)
+	rhval := rhs.(float64)
+	switch relop {
+	case "<":
+		if lhval < rhval {
+			return true
+		}
+		return false
+	case ">":
+		if lhval > rhval {
+			return true
+		}
+		return false
+	case "<=":
+		if lhval <= rhval {
+			return true
+		}
+		return false
+	case ">=":
+		if lhval >= rhval {
+			return true
+		}
+		return false
+	case "=":
+		if lhval == rhval {
+			return true
+		}
+		return false
+	}
+	return false
 }
