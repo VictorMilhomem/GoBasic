@@ -17,10 +17,7 @@ type Visitor struct {
 	lines *Environment // store all lines evaluation
 }
 
-var (
-	currentLine string
-	_goto       bool
-)
+var currentLine string
 
 func NewVisitor() Visitor {
 	return Visitor{
@@ -58,7 +55,7 @@ func (v *Visitor) VisitLine(ctx *LineContext) interface{} {
 	switch {
 	case ctx.Statement() != nil && ctx.Number() != nil:
 		currentLine = strings.Trim(ctx.Number().GetText(), "\"")
-		v.lines.Set(currentLine, ctx.Statement())
+		v.lines.Set(currentLine, ctx)
 		return v.Visit(ctx.Statement())
 
 	default:
@@ -81,14 +78,17 @@ func (v *Visitor) VisitStatement(ctx *StatementContext) interface{} {
 		}
 		return nil
 	case "GOTO":
-		line_stmt, _ := v.lines.Get(strings.Trim(ctx.Number().GetText(), "\""))
-		return v.Visit(line_stmt.(antlr.ParseTree))
+		line_ctx, _ := v.lines.Get(strings.Trim(ctx.Number().GetText(), "\""))
+		return v.Visit(line_ctx.(*LineContext))
 	case "INPUT":
+		// vara := v.Visit(ctx.Varlist())
+		// fmt.Scanln()
 		return nil
 	case "LET":
 		name := strings.Trim(ctx.Vara().GetText(), "\"")
 		return v.env.Set(name, v.Visit(ctx.Expression(0)))
 	case "GOSUB":
+		// Store the lines until it see the return
 		return v.Visit(ctx.Expression(0))
 	case "RETURN":
 		return nil
@@ -191,6 +191,13 @@ func (v *Visitor) VisitFactor(ctx *FactorContext) interface{} {
 	default:
 		return nil
 	}
+}
+
+func (v *Visitor) VisitVarlist(ctx *VarlistContext) interface{} {
+	for _, vara := range ctx.AllVara() {
+		v.Visit(vara)
+	}
+	return nil
 }
 
 func (v *Visitor) VisitVara(ctx *VaraContext) interface{} {
